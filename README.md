@@ -10,6 +10,8 @@ Google Chrome Extension. Record All Browsing in Screenshots & Full Text. Search 
 [Click here to install it from Chrome Web Store]
 (https://chrome.google.com/webstore/detail/all-seeing-eye/kiopjipnmfcpdambegpfmggaffjmhnkd "All Seeing Eye")
 
-I've only tested this with Google Chrome a Mac. If you use Windows you'll be the first to test it. After you install it from the link above you start browsing like you normally do and when you want to search for something you simply go to Chrome-->History and select Show All History at the bottom of the menu.
+As a developer, it's recommended that you load it from chrome://extensions URL in Chrome browser by choosing "Load unpacked extension" and selecting the root folder of this project.
+
+I've only tested this extension with Google Chrome on a Mac. If you use Windows you'll be the first to test it. Please report any issues you find. After you install it from the link above you start browsing like you normally do and when you want to search for something you simply go to Chrome-->History and select Show All History at the bottom of the menu.
 
 
