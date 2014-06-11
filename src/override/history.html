@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>All Seeing Eye</title>
+    <link rel="stylesheet" type="text/css" href="o2.css"/>
+    <link rel="stylesheet" type="text/css" href="custom.css"/>
+     <link rel="stylesheet" type="text/css" href="history.css"/>
+</head>
+<body>
+
+<div class="container main-container">
+<div class="row" class="top">
+<div class="span8">
+<div class="row-fluid">
+<input type="text" class="span6 input">
+<input type="button" class="span2 yellow btn search" value="Search">
+</div>
+</div>
+</div>
+</div>
+
+<div fragment class="container main-container init">
+    <div class="row">
+        <div class="span10">
+            <div class="row-fluid">
+                <h1>no items in history yet - start browsing then reload this page</h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div fragment class="container main-container nullResult">
+    <div class="row">
+        <div class="span10">
+            <div class="row-fluid">
+                <h1>no matching items in history - modify your search</h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container main-container">
+    <div class="row lists">
+
+        <!-- start of list container -->
+        <div fragment class="span4 listContainer">
+            <div class="row-fluid">
+                <div class="span12 infinityListContainer">
+                </div>
+            </div>
+        </div>
+        <!-- end of list container -->
+
+
+    </div>
+</div>
+
+<script src="../../vendor/jquery-2.1.0.min.js"></script>
+<script src="../../vendor/infinity.js"></script>
+<script src="../lib/nlp.js"></script>
+<script src="history.js"></script>
