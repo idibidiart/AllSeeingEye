@@ -5,6 +5,8 @@ Google Chrome Extension. Record All Browsing in Screenshots & Full Text. Search 
 
 ![Alt text](/../screenshots/screenshot01.png?raw=true "sample")
 
+![Alt text](/../screenshots/screenshot02.png?raw=true "sample")
+
 [click for youtube video of me playing with it, late at night :)](https://www.youtube.com/watch?v=zEEWF4HxCtE)
 
 ###Installing
@@ -16,7 +18,7 @@ As a developer, it's recommended that you load it from chrome://extensions URL i
 I've only tested this extension with Google Chrome on a Mac. If you use Windows you'll be the first to test it. Please report any issues you find. 
 
 ###Usage
-After you install it from the link above you start browsing like you normally do and when you want to search for something you simply go to Chrome-->History and select Show All History at the bottom of the menu.
+After you install it from the link above you start browsing like you normally do and when you want to search for something you simply go to Chrome-->History and select Show All History at the bottom of the menu. NEW: Checkout the "Options" tab as I've added a way to prevent capturing certain sites like your bank or Gmail etc.
 
 
 ###Storage Limit
