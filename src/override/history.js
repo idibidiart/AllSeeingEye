@@ -244,8 +244,6 @@ $(function() {
 
         getHostTags($('.tagsinput'))
 
-        $('.optionsTabs').tabs()
-
     }, 500)
 
 })
