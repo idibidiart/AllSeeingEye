@@ -90,7 +90,7 @@ $(function() {
         )
     }
 
-    function search(tags, text, multiWords, listFragment, initFragment, nullResultFragment) {
+    function search(tags, text, multi, listFragment, initFragment, nullResultFragment) {
 
         slotBottom = 0, slotTop = 0;
 
@@ -100,7 +100,7 @@ $(function() {
                 action: "search",
                 tags: tags,
                 text: text,
-                multiWords: multiWords
+                multi: multi
             }, function(r) {
                 if (r.result === "not found") {
                     nullResultFragment

@@ -78,7 +78,7 @@
             }
 
             if (msg.action === "search") {
-                search(msg.tags, msg.text, msg.multiWord, sender.tab.id, function(r) {
+                search(msg.tags, msg.text, msg.multi, sender.tab.id, function(r) {
                     respond(r)
                 })
             }
@@ -454,3 +454,6 @@
     }
 
 }(window,jQuery)
+
+
+
