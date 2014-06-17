@@ -240,9 +240,11 @@ $(function() {
 
         showAll($('[fragment].listContainer'), $('[fragment].init'))
 
-        $('select').tagsinput()
+        $('.tagsinput').tagsinput()
 
-        getHostTags($('select'))
+        getHostTags($('.tagsinput'))
+
+        $('.optionsTabs').tabs()
 
     }, 500)
 

@@ -91,7 +91,6 @@
 
                 request.onsuccess = function(e) {
                     var result = e.target.result
-                    console.log(result)
                     respond(result)
                 }
             }
@@ -106,6 +105,9 @@
                         tags: NLP.unique(msg.tags)
                     }
                 )
+
+                // close the handler
+                respond()
             }
         }
 
@@ -149,8 +151,8 @@
                     ,   date = msg.date
                     ,   title = msg.title
 
-                // async control loop, start by capturing sender.tab and respond function in self executing closure
-                !function(t) {
+                // async control loop, start by capturing sender.tab and the listener's respond function
+                !function(tab, respond) {
 
                     // timeout is needed here because bug in Chrome that causes capture API to fail
                     // if fired immediately upon tab becoming visible
@@ -161,8 +163,11 @@
 
                             // if not, and another tab is active right now, re-send capture request to tab and return
                             // The tab will respond when it's visible
-                            if (!tabs[0] || t.id !== tabs[0].id) {
-                                capture(t.id, true)
+                            if (!tabs[0] || tab.id !== tabs[0].id) {
+                                // close the handler
+                                respond()
+                                // retry capture
+                                capture(tab.id)
                                 return
                             }
 
@@ -290,18 +295,16 @@
 
     function capture(tabId, retry) {
 
-        if (!retry) {
-            chrome.tabs.executeScript(tabId, {file: "vendor/jquery-2.1.0.min.js", runAt: "document_start"}, function (result) {
-                if (chrome.runtime.lastError) {
-                    return;
-                }
-            })
-            chrome.tabs.executeScript(tabId, {file: "src/lib/nlp.js", runAt: "document_start"}, function (result) {
-                if (chrome.runtime.lastError) {
-                    return;
-                }
-            })
-        }
+        chrome.tabs.executeScript(tabId, {file: "vendor/jquery-2.1.0.min.js", runAt: "document_start"}, function (result) {
+            if (chrome.runtime.lastError) {
+                return;
+            }
+        })
+        chrome.tabs.executeScript(tabId, {file: "src/lib/nlp.js", runAt: "document_start"}, function (result) {
+            if (chrome.runtime.lastError) {
+                return;
+            }
+        })
 
         chrome.tabs.executeScript(tabId, {file: "src/inject/addHistoryItem.js", runAt: "document_start"}, function (result) {
             if (chrome.runtime.lastError) {
