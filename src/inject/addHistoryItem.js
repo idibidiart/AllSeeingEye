@@ -4,7 +4,7 @@ if (window.scriptURL !== window.location.href) {
 
     var beenVisible = false
 
-    var getText = getText || function (cb) {
+    var getText = getText || function () {
         var n
             , text = window.location.hostname + " " + document.title + " "
             , walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
@@ -19,9 +19,7 @@ if (window.scriptURL !== window.location.href) {
 
         text = text
                     .toLowerCase()
-                    .replace(new RegExp("[ \\f\\n\\r\\t\\v\\u00A0\\u2028\\u2029\"_\-]+", "gm"), " ")
-                    .replace(/[']+/g, "")
-                    .trim() || ""
+                    .replace(new RegExp("[ \\f\\n\\r\\t\\v\\u00A0\\u2028\\u2029\"_\\-\']+", "gm"), " ") || ""
 
         console.time("tags")
         var tags = text && NLP.unique(NLP.stop(text.match(/([\w]+)/g))).map(function(v, i) { return NLP.stem(v)}) || []
@@ -39,21 +37,33 @@ if (window.scriptURL !== window.location.href) {
                 return
             }
 
-            var content = getText()
-
             chrome.runtime.sendMessage({
                 from: "content",
-                action: "store",
-                title: document.title,
-                text: content.text,
-                tags: content.tags
+                action: "allow",
+                hostname: window.location.hostname
             }, function (r) {
-                if (r) {
-                    beenVisible = true;
-                    document.removeEventListener('visibilitychange', visible, false)
-                }
-            })
+                    if (r) {
+                       store()
+                    }
+               }
+            )
 
+            function store() {
+                var content = getText()
+
+                chrome.runtime.sendMessage({
+                    from: "content",
+                    action: "store",
+                    title: document.title,
+                    text: content.text,
+                    tags: content.tags
+                }, function (r) {
+                    if (r) {
+                        beenVisible = true;
+                        document.removeEventListener('visibilitychange', visible, false)
+                    }
+                })
+            }
         }
     }
 

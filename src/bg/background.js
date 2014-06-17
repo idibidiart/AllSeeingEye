@@ -11,11 +11,65 @@
                             <i class='icon icon-pushpin'></i>\
                          </div>"
         ,   isActive = {}
-        ,   done = true
+        ,   deleteDone = true
+        ,   dbVersion = 2
+        ,   settingsVersion = 1
+
+    var     openRequest = indexedDB.open("AllMyHistory", dbVersion)
+        ,   db
+
+    openRequest.onupgradeneeded = function (e) {
+
+        var thisDb = e.target.result;
+
+        //Create object stores
+        if (!thisDb.objectStoreNames.contains("links")) {
+            var objectStore = thisDb.createObjectStore("links", { keyPath: "id", autoIncrement: true });
+            objectStore.createIndex("date", "date", {unique: false});
+            objectStore.createIndex("tags", "tags", {unique: false, multiEntry: true});
+        }
+
+        if (!thisDb.objectStoreNames.contains("settings")) {
+
+            var objectStore = thisDb.createObjectStore("settings", { keyPath: "v", autoIncrement: false });
+            objectStore.createIndex("tags", "tags", {unique: false, multiEntry: true});
+
+            objectStore.transaction.oncomplete = function(e) {
+                var transaction = thisDb.transaction("settings", "readwrite");
+                var objectStore = transaction.objectStore("settings");
+                var request = objectStore.put(
+                    {
+                        v: settingsVersion,
+                        // todo:
+                        // copy tags from previous version of the settings object (no such for now)
+                        tags: []
+                    }
+                )
+            }
+        }
+    }
+
+    openRequest.onsuccess = function (e) {
+
+        db = e.target.result;
+
+        db.onerror = function (e) {
+            var isCase = {
+                "ConstraintError": function() {
+                    console.log("ConstraintError")
+                }
+            }
+            if (isCase[e.target.error.name]) {
+                isCase[e.target.error.name]()
+            } else {
+                console.log(e.target.error.message)
+            }
+        }
+    }
 
     chrome.runtime.onMessage.addListener(function (msg, sender, respond) {
 
-        if (msg.from = "history") {
+        if (msg.from === "history") {
 
             if (msg.action === "showAll") {
                 showAll(sender.tab.id, function(r) {
@@ -24,13 +78,69 @@
             }
 
             if (msg.action === "search") {
-                search(msg.tags, msg.text, msg.numWords, sender.tab.id, function(r) {
+                search(msg.tags, msg.text, msg.multiWord, sender.tab.id, function(r) {
                     respond(r)
                 })
             }
+
+            if (msg.action === "getHostTags") {
+
+                var transaction = db.transaction("settings", "readwrite");
+                var objectStore = transaction.objectStore("settings");
+                var request = objectStore.get(settingsVersion)
+
+                request.onsuccess = function(e) {
+                    var result = e.target.result
+                    console.log(result)
+                    respond(result)
+                }
+            }
+
+            if (msg.action === "saveHostTags") {
+
+                var transaction = db.transaction("settings", "readwrite");
+                var objectStore = transaction.objectStore("settings");
+                var request = objectStore.put(
+                    {
+                        v: settingsVersion,
+                        tags: NLP.unique(msg.tags)
+                    }
+                )
+            }
         }
 
-        if (msg.from = "content") {
+        if (msg.from === "content") {
+
+            if (msg.action == "allow") {
+
+                var transaction = db.transaction("settings", "readonly");
+                var objectStore = transaction.objectStore("settings");
+                var request = objectStore.get(settingsVersion)
+
+                var test = false
+
+                request.onsuccess = function(e) {
+
+                    var result = e.target.result
+
+                    var hostname = msg.hostname
+
+                    tags = result.tags
+
+                    for (var n = 0, len = tags.length; n < len; n++) {
+                     if (hostname.match(new RegExp("([^a-zA-Z0-9\\-]|^)" + esc(tags[n]) + "(?![a-zA-Z0-9\\-])"))) {
+                           test = true
+                           break
+                       }
+                    }
+
+                    if (test) {
+                       respond(false)
+                    } else {
+                       respond(true)
+                    }
+                }
+            }
 
             if (msg.action === "store") {
                 var     url = sender.tab.url
@@ -39,20 +149,20 @@
                     ,   date = msg.date
                     ,   title = msg.title
 
-                // async control loop, start by capturing sender.tab in self executing closure
+                // async control loop, start by capturing sender.tab and respond function in self executing closure
                 !function(t) {
 
                     // timeout is needed here because bug in Chrome that causes capture API to fail
                     // if fired immediately upon tab becoming visible
                     function captureActive() {
 
-                        // is the we're after tab really active right at this precise time?
+                        // is the tab we're after is active right at this precise time?
                         chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
 
                             // if not, and another tab is active right now, re-send capture request to tab and return
                             // The tab will respond when it's visible
                             if (!tabs[0] || t.id !== tabs[0].id) {
-                                capture(t.id)
+                                capture(t.id, true)
                                 return
                             }
 
@@ -69,7 +179,7 @@
 
                                     var transaction = db.transaction(["links"], "readwrite");
                                     var objectStore = transaction.objectStore("links");
-                                    var req = objectStore.add(
+                                    var request = objectStore.add(
                                         {
                                             date: new Date().toLocaleString(),
                                             title: title,
@@ -81,7 +191,7 @@
                                     )
 
                                     // see if we need to free up disk space
-                                    req.onsuccess = function () {
+                                    request.onsuccess = function () {
                                         console.log(url);
                                         console.log(text);
                                         console.log(tags.sort());
@@ -90,11 +200,11 @@
 
                                         function freeSpace() {
 
-                                            if (!done) return
+                                            if (!deleteDone) return
 
-                                            done = false
+                                            deleteDone = false
 
-                                            var transaction = db.transaction(["links"], "readwrite");
+                                            var transaction = db.transaction(["links"], "readonly");
                                             var objectStore = transaction.objectStore("links");
 
                                             var count = objectStore.count();
@@ -102,7 +212,7 @@
                                             count.onsuccess = function(e) {
                                                 var numItems = e.target.result
 
-                                                // if ~> 10Gb, assuming a generous 1Mb per page
+                                                // if ~> 5Gb, assuming a generous 500K per page
                                                 if (numItems > total) {
                                                     var transaction = db.transaction(["links"], "readwrite");
                                                     var objectStore = transaction.objectStore("links");
@@ -114,22 +224,21 @@
                                                         var cursor = e.target.result;
 
                                                         if (cursor) {
-
                                                             console.log('freeing up space... very lazily')
                                                             objectStore.delete(cursor.primaryKey);
                                                             if (n) {
                                                                 n--
                                                                 cursor.continue()
                                                             } else {
-                                                                done = true
+                                                                deleteDone = true
                                                             }
 
                                                         } else {
-                                                            done = true
+                                                            deleteDone = true
                                                         }
                                                     }
                                                 } else {
-                                                    done = true
+                                                    deleteDone = true
                                                 }
                                             }
 
@@ -143,44 +252,27 @@
                         })
                     }
                     setTimeout(captureActive, 500)
-                }(sender.tab)
+                }(sender.tab, respond)
             }
         }
         return true
     });
 
-    function capture(tabId) {
-            chrome.tabs.executeScript(tabId, {file: "vendor/jquery-2.1.0.min.js", runAt: "document_start"}, function (result) {
-                if (chrome.runtime.lastError) {
-                    return;
-                }
-            })
-            chrome.tabs.executeScript(tabId, {file: "src/lib/nlp.js", runAt: "document_start"}, function (result) {
-                if (chrome.runtime.lastError) {
-                    return;
-                }
-            })
-
-            chrome.tabs.executeScript(tabId, {file: "src/inject/addHistoryItem.js", runAt: "document_start"}, function (result) {
-                if (chrome.runtime.lastError) {
-                    return;
-                }
-            })
-    }
-
     chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+
         if (changeInfo.status === "loading") {
             delete isActive[tabId]
             return
         }
 
-        if (tab.url.indexOf("chrome://history") === 0) {
-            if (changeInfo.status === "complete") {
+        if (changeInfo.status === "complete") {
+            if (tab.url.indexOf("chrome://history") === 0) {
                 isActive[tabId] = true
                 return
             }
+            capture(tabId)
         }
-        capture(tabId)
+
     })
 
     chrome.tabs.onReplaced.addListener(function(tabId, removedTabId){
@@ -192,28 +284,30 @@
         delete isActive[tabId]
     })
 
-    var openRequest = indexedDB.open("AllMyHistory", 1)
-        , db;
-
-    openRequest.onupgradeneeded = function (e) {
-
-        var thisDb = e.target.result;
-
-        //Create objectStore
-        if (!thisDb.objectStoreNames.contains("links")) {
-            var objectStore = thisDb.createObjectStore("links", { keyPath: "id", autoIncrement: true });
-            objectStore.createIndex("date", "date", {unique: false});
-            objectStore.createIndex("tags", "tags", {unique: false, multiEntry: true});
-        }
-
+    function esc(str) {
+        return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
     }
 
-    openRequest.onsuccess = function (e) {
-        db = e.target.result;
-        db.onerror = function (event) {
-            // Generic error handler for all errors targeted at this database' requests!
-            console.log("database error");
-        };
+    function capture(tabId, retry) {
+
+        if (!retry) {
+            chrome.tabs.executeScript(tabId, {file: "vendor/jquery-2.1.0.min.js", runAt: "document_start"}, function (result) {
+                if (chrome.runtime.lastError) {
+                    return;
+                }
+            })
+            chrome.tabs.executeScript(tabId, {file: "src/lib/nlp.js", runAt: "document_start"}, function (result) {
+                if (chrome.runtime.lastError) {
+                    return;
+                }
+            })
+        }
+
+        chrome.tabs.executeScript(tabId, {file: "src/inject/addHistoryItem.js", runAt: "document_start"}, function (result) {
+            if (chrome.runtime.lastError) {
+                return;
+            }
+        })
     }
 
     function showAll(tabId, cb) {
@@ -235,7 +329,7 @@
                             title: cursor.value.title,
                             date:  cursor.value.date,
                             img: cursor.value.img,
-                            url: cursor.value.url,
+                            url: cursor.value.url
                         }
                     }
                 )
@@ -260,7 +354,6 @@
         var objectStore = transaction.objectStore("links");
         var index = objectStore.index("tags");
 
-        //  matches substring but only at start, e.g. fight in fighting but not in infighting
         var range = IDBKeyRange.only(tags[tags.length - 1], "prev")
         var cursor = index.openCursor(range)
 

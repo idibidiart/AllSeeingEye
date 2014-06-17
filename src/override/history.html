@@ -9,53 +9,99 @@
 <body>
 
 <div class="container main-container">
-<div class="row" class="top">
-<div class="span8">
-<div class="row-fluid">
-<input type="text" class="span6 input">
-<input type="button" class="span2 yellow btn search" value="Search">
-</div>
-</div>
-</div>
-</div>
+    <div id="content">
+        <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
+            <li class="active"><a href="#search" data-toggle="tab">Search</a></li>
+            <li><a href="#options" data-toggle="tab">Options</a></li>
+        </ul>
+        <div id="my-tab-content" class="tab-content">
+            <div class="tab-pane active" id="search">
 
-<div fragment class="container main-container init">
-    <div class="row">
-        <div class="span10">
-            <div class="row-fluid">
-                <h1>no items in history yet - start browsing then reload this page</h1>
-            </div>
-        </div>
-    </div>
-</div>
+                <!---------------------------------->
 
-<div fragment class="container main-container nullResult">
-    <div class="row">
-        <div class="span10">
-            <div class="row-fluid">
-                <h1>no matching items in history - modify your search</h1>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="container main-container">
-    <div class="row lists">
-
-        <!-- start of list container -->
-        <div fragment class="span4 listContainer">
-            <div class="row-fluid">
-                <div class="span12 infinityListContainer">
+                <div class="container main-container">
+                    <div class="row" class="top">
+                        <div class="span8">
+                            <div class="row-fluid">
+                                <input type="text" class="span6 keywords">
+                                <input type="button" class="span2 yellow btn search" value="Search">
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <div fragment class="container main-container init">
+                    <div class="row">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <h1>no items in history yet - start browsing then reload this page</h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div fragment class="container main-container nullResult">
+                    <div class="row">
+                        <div class="span12">
+                            <div class="row-fluid">
+                                <h1>no matching items in history - modify your search</h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container main-container">
+                    <div class="row lists">
+
+                        <!-- start of list container -->
+                        <div fragment class="span4 listContainer">
+                            <div class="row-fluid">
+                                <div class="span12 infinityListContainer">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- end of list container -->
+
+                    </div>
+                </div>
+
+                <!---------------------------------->
+
+            </div>
+            <div class="tab-pane" id="options">
+
+                <div class="container main-container">
+
+                <!---------------------------------->
+                    <div class="well">
+                        <h3>Do Not Capture</h3>
+                        <p>
+                        If for some reason you don't want to capture a given site, e.g. Gmail, you may enter its address
+                        (e.g. mail.google.com) into the box below and press
+                        return or space to tag it. And if you don't want to capture a site that has the word
+                        "mail" as part of its address then you may enter the word "mail" by itself. This will match
+                        all sites containing "mail" in their address like mail.google.com (Gmail),
+                        mail.yahoo.com (Yahoo Mail) and mail.myCompany.com but it won't match sites like
+                        mail-123.xyz.com or www.MyMail.com. To match those, you may enter mail-123.xyz.com and
+                        mymail.com, respectively.  
+                        </p>
+                        <p>
+                        Removing the tags will re-enable capturing.  
+                        </p>
+                    </div>
+                    <select class='tagsinput' multiple="" data-role="tagsinput" style="display: none;">
+                    </select>
+                <!---------------------------------->
+                </div>
+
             </div>
         </div>
-        <!-- end of list container -->
-
-
     </div>
 </div>
 
 <script src="../../vendor/jquery-2.1.0.min.js"></script>
+<script src="../../vendor/bootstrap.min.js"></script>
+<script src="../../vendor/bootstrap-tagsinput-modified.js"></script>
 <script src="../../vendor/infinity.js"></script>
 <script src="../lib/nlp.js"></script>
 <script src="history.js"></script>

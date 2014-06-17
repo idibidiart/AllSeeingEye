@@ -14,7 +14,8 @@ $(function() {
                             </div>\
                         </div>"
 
-    var lists;
+    var     lists
+        ,   doneGetTags = false;
 
     function handleMagnify() {
         var src = $(this).parent().find('img').attr("src")
@@ -24,8 +25,8 @@ $(function() {
 
     function handleLinkable() {
         var url = $(this).parent().find('span').data("url")
-        var imgWindow = window.open(url,"_blank");
-        imgWindow.focus();
+        var urlWindow = window.open(url,"_blank");
+        urlWindow.focus();
     }
 
     function getList(fragment) {
@@ -63,12 +64,9 @@ $(function() {
     }
 
     function template(json, t) {
-
         var html = t.replace(/%(\w+)/g, function(m, sm) {
-
             return json[sm] === undefined ? "" : json[sm]
         })
-
         return html
     }
 
@@ -89,10 +87,10 @@ $(function() {
                         .attr("frag", "remove-me")
                 }
             }
-        );
+        )
     }
 
-    function search(tags, text, numWords, listFragment, initFragment, nullResultFragment) {
+    function search(tags, text, multiWords, listFragment, initFragment, nullResultFragment) {
 
         slotBottom = 0, slotTop = 0;
 
@@ -102,7 +100,7 @@ $(function() {
                 action: "search",
                 tags: tags,
                 text: text,
-                numWords: numWords
+                multiWords: multiWords
             }, function(r) {
                 if (r.result === "not found") {
                     nullResultFragment
@@ -127,14 +125,12 @@ $(function() {
 
     var lastInput;
 
-    function handleSearch() {
+    function handleSearch(e) {
 
-        var text = $('.input')
+        var text = $(e.target)
                         .val()
                         .toLowerCase()
-                        .replace(new RegExp("[ \\f\\n\\r\\t\\v\\u00A0\\u2028\\u2029\"_\-]+", "gm"), " ")
-                        .replace(/[']+/g, "")
-                        .trim() || ""
+                        .replace(new RegExp("[ \\f\\n\\r\\t\\v\\u00A0\\u2028\\u2029\"_\\-\']+", "gm"), " ") || ""
 
         if (text === lastInput) {
             return
@@ -163,21 +159,43 @@ $(function() {
 
     }
 
-    $(document).on('click touchend', '.search', handleSearch)
-    $('.input').keyup(function(e) {
-        if (!$(this).val() || e.which == 13 ) {
-            handleSearch()
+    function saveHostTags(e) {
+
+        if (!doneGetTags) return
+
+        var tags = $(e.target).val()
+
+        chrome.runtime.sendMessage(
+            {
+                from: "history",
+                action: "saveHostTags",
+                tags: tags || []
+            })
+    }
+
+    function getHostTags(el) {
+
+        chrome.runtime.sendMessage(
+            {
+                from: "history",
+                action: "getHostTags"
+            }, function(r) {
+                if (r.tags.length) {
+                    for (var n = 0, len = r.tags.length; n < len; n++) {
+                        el.tagsinput('add', r.tags[n])
+                    }
+                    doneGetTags = true
+                } else {
+                    doneGetTags = true
+                }
+            })
+    }
+
+    $('.keywords').keyup(function(e) {
+        if ($(this).val() == "" || e.which == 13 ) {
+            handleSearch(e)
         }
     })
-
-    $(document).on('click touchend', '.magnify', handleMagnify)
-
-    $(document).on('click touchend', '.linkable', handleLinkable)
-
-    setTimeout(function() {
-        lists = newLists($('[fragment].listContainer'))
-        showAll($('[fragment].listContainer'), $('[fragment].init'))
-    }, 500)
 
     var slotBottom = 0, slotTop = 0;
 
@@ -206,8 +224,27 @@ $(function() {
                 }
             }
         }
-
     });
+
+    $(document).on('click touchend', '.search', handleSearch)
+
+    $(document).on('click touchend', '.magnify', handleMagnify)
+
+    $(document).on('click touchend', '.linkable', handleLinkable)
+
+    $(document).on('change', 'select', saveHostTags)
+
+    setTimeout(function() {
+
+        lists = newLists($('[fragment].listContainer'))
+
+        showAll($('[fragment].listContainer'), $('[fragment].init'))
+
+        $('select').tagsinput()
+
+        getHostTags($('select'))
+
+    }, 500)
 
 })
 

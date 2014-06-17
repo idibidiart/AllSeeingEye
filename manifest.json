@@ -1,7 +1,7 @@
 {
   "name": "ALL SEEING EYE",
   "short_name": "Web Recorder",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "manifest_version": 2,
   "description": "Record All Browsing in Screenshots & Full Text. Search For Anything At Any Time. Never Forget Where You Read Something. 100% Private",
   "icons": {
@@ -13,7 +13,6 @@
     "scripts": ["vendor/jquery-2.1.0.min.js", "src/lib/nlp.js", "src/bg/background.js"],
     "persistent": true
   },
-  "options_page": "src/options/index.html",
   "chrome_url_overrides": {
     "history": "src/override/history.html"
   },
