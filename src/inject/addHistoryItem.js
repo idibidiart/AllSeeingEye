@@ -76,7 +76,7 @@ if (window.scriptURL !== window.location.href) {
             } else {
                 document.addEventListener('visibilitychange', visible, false)
             }
-       }, 500)
+       }, 3500)
     })
 }
 
