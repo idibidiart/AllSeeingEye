@@ -34,6 +34,10 @@ img {
   border-radius: 4px;
 }
 
+.caption-text {
+    font-size: 14px;
+}
+
 .magnify {
   width: 30px;
   height: 31px;

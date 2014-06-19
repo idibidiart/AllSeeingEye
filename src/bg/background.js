@@ -71,6 +71,16 @@
 
         if (msg.from === "history") {
 
+            if (msg.action === "inactive") {
+                delete isActive[sender.tab.id]
+                respond()
+            }
+
+            if (msg.action === "active") {
+                isActive[sender.tab.id] = true
+                respond()
+            }
+
             if (msg.action === "showAll") {
                 showAll(sender.tab.id, function(r) {
                      respond(r)
@@ -260,28 +270,19 @@
                 }(sender.tab, respond)
             }
         }
+
+        // keeps the handler running (ref: Chrome API docs)
         return true
     });
 
     chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-
-        if (changeInfo.status === "loading") {
-            delete isActive[tabId]
-            return
-        }
-
         if (changeInfo.status === "complete") {
-            if (tab.url.indexOf("chrome://history") === 0) {
-                isActive[tabId] = true
-                return
-            }
             capture(tabId)
         }
-
     })
 
     chrome.tabs.onReplaced.addListener(function(tabId, removedTabId){
-        delete isActive[tabId]
+        delete isActive[removedTabId]
         capture(tabId)
     });
 
@@ -337,7 +338,6 @@
                     }
                 )
 
-                found = true
                 cb(true)
 
                 if (isActive[tabId]) {

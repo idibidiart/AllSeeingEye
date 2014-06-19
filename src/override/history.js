@@ -125,9 +125,9 @@ $(function() {
 
     var lastInput;
 
-    function handleSearch(e) {
+    function handleSearch() {
 
-        var text = $(e.target)
+        var text = $('.keywords')
                         .val()
                         .toLowerCase()
                         .replace(new RegExp("[ \\f\\n\\r\\t\\v\\u00A0\\u2028\\u2029\"_\\-\']+", "gm"), " ") || ""
@@ -143,27 +143,71 @@ $(function() {
 
         $('[frag="remove-me"]').remove()
 
-        lists = newLists($('[fragment].listContainer'))
-
         if (tags[0]) {
-            search(tags, text, words.length> 1 ? true : false, $('[fragment].listContainer'), $('[fragment].init'), $('[fragment].nullResult'))
-        }  else if (text) {
-            $('[fragment].nullResult')
-                .clone(true)
-                .appendTo($('[fragment].nullResult').parent())
-                .removeAttr("fragment")
-                .attr("frag", "remove-me")
-        }  else {
-            showAll($('[fragment].listContainer'), $('[fragment].init'))
-        }
+            chrome.runtime.sendMessage(
+                {
+                    from: "history",
+                    action: "inactive"
+                }, function() {
+                    setTimeout(function() {
+                        lists = newLists($('[fragment].listContainer'))
+                        chrome.runtime.sendMessage(
+                            {
+                                from: "history",
+                                action: "active"
+                            }, function() {
+                                search(tags, text, words.length> 1 ? true : false, $('[fragment].listContainer'), $('[fragment].init'), $('[fragment].nullResult'))
+                            })
+                    }, 500)
+                })
 
+        }  else if (text) {
+            chrome.runtime.sendMessage(
+                {
+                    from: "history",
+                    action: "inactive"
+                }, function() {
+                    setTimeout(function() {
+                        lists = newLists($('[fragment].listContainer'))
+                        chrome.runtime.sendMessage(
+                            {
+                                from: "history",
+                                action: "active"
+                            }, function() {
+                                $('[fragment].nullResult')
+                                    .clone(true)
+                                    .appendTo($('[fragment].nullResult').parent())
+                                    .removeAttr("fragment")
+                                    .attr("frag", "remove-me")
+                            })
+                    }, 500)
+                })
+        }  else {
+            chrome.runtime.sendMessage(
+                {
+                    from: "history",
+                    action: "inactive"
+                }, function() {
+                    setTimeout(function() {
+                        lists = newLists($('[fragment].listContainer'))
+                        chrome.runtime.sendMessage(
+                            {
+                                from: "history",
+                                action: "active"
+                            }, function() {
+                                showAll($('[fragment].listContainer'), $('[fragment].init'))
+                            })
+
+                    }, 500)
+                })
+        }
     }
 
     function saveHostTags(e) {
 
         if (!doneGetTags) return
 
-        var tags = $(e.target).val()
+        var tags = $('.tagsinput').val()
 
         chrome.runtime.sendMessage(
             {
@@ -234,17 +278,29 @@ $(function() {
 
     $(document).on('change', 'select', saveHostTags)
 
-    setTimeout(function() {
 
-        lists = newLists($('[fragment].listContainer'))
+    chrome.runtime.sendMessage(
+        {
+            from: "history",
+            action: "inactive"
+        }, function() {
+            setTimeout(function() {
+                lists = newLists($('[fragment].listContainer'))
+                chrome.runtime.sendMessage(
+                    {
+                        from: "history",
+                        action: "active"
+                    }, function() {
+                        showAll($('[fragment].listContainer'), $('[fragment].init'))
+                    })
 
-        showAll($('[fragment].listContainer'), $('[fragment].init'))
+            }, 500)
+        })
 
-        $('.tagsinput').tagsinput()
+    $('.tagsinput').tagsinput()
 
-        getHostTags($('.tagsinput'))
+    getHostTags($('.tagsinput'))
 
-    }, 500)
 
 })
 
