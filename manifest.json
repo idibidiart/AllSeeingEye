@@ -1,7 +1,7 @@
 {
   "name": "ALL SEEING EYE",
   "short_name": "Web Recorder",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "manifest_version": 2,
   "description": "Record All Browsing in Screenshots & Full Text. Search For Anything At Any Time. Never Forget Where You Read Something. 100% Private",
   "icons": {

@@ -956,7 +956,9 @@
   // them.
 
   ListItem.prototype.remove = function() {
+
     this.$el.remove();
+
     removeItemFromPage(this, this.parent);
     this.cleanup();
   };

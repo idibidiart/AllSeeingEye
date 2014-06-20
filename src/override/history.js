@@ -9,13 +9,20 @@ $(function() {
                                 </div>\
                                 <a class='magnify' title='View Snapshot'>\
                                     <i class='icon icon-magnify magnify-inner' style='color:black'></i>\
-                                </a>\
-                                <span data-url='%url'></span>\
+                                </a>%trash\
+                                <span data-url='%url' data-pkey='%primaryKey'></span>\
                             </div>\
                         </div>"
 
-    var     lists
-        ,   doneGetTags = false;
+    var     lists = []
+        ,   doneGetTags = false
+
+
+    // todo
+    // put all selectors in this object here then move to a file
+    // so selectors can be changed in one place
+    // instead of being spread out everywhere
+    var selectors = {}
 
     function handleMagnify() {
         var src = $(this).parent().find('img').attr("src")
@@ -29,38 +36,67 @@ $(function() {
         urlWindow.focus();
     }
 
-    function getList(fragment) {
+    function handleTrash() {
+
+       var item = $(this).closest('.pug-item')
+
+       var listItem = item[0].__item
+
+       var pkey = item.find('span').data('pkey')
+
+       chrome.runtime.sendMessage(
+            {
+                from: "history",
+                action: "delete",
+                primaryKey: pkey
+            }, function(r) {
+                listItem.remove()
+                if (!r) {
+                    lists.forEach(function(v, i) {
+                        v.remove()
+                    })
+                    var initFragment = ($('[fragment].listContainer'), $('[fragment].init'))
+                    initFragment
+                        .clone(true)
+                        .appendTo(initFragment.parent())
+                        .removeAttr("fragment")
+                        .attr("frag", "remove-me")
+                }
+            }
+       )
+    }
+
+    function getList(fragment, n) {
 
         return new infinity.ListView(
             fragment
                 .clone(true)
                 .appendTo(fragment.parent())
                 .removeAttr("fragment")
-                .attr("frag","")
+                .attr("frag",n)
                 .find('.infinityListContainer')
         )
     }
 
     function newLists(fragment) {
 
-        if (fragment.siblings()[0]) {
-            // no events attached to fragment root so just remove those of descendants
-            fragment.siblings().find("*").off()
-            // remove fragment
-            fragment.siblings().remove()
-        }
+        lists.forEach(function(v, i) {
+            v.remove()
+        })
 
         var ls = []
 
         for (var n = 0; n < 3; n++) {
-            ls[n] = getList(fragment)
+            ls[n] = getList(fragment, n)
         }
 
         return ls
     }
 
     function addItem(html, list, pre) {
-        list[pre?"prepend":"append"]($(html))
+        var listItem = list[pre?"prepend":"append"]($(html))
+
+        listItem.$el[0].__item = listItem
     }
 
     function template(json, t) {
@@ -274,6 +310,8 @@ $(function() {
 
     $(document).on('click touchend', '.magnify', handleMagnify)
 
+    $(document).on('click touchend', '.trash', handleTrash)
+
     $(document).on('click touchend', '.linkable', handleLinkable)
 
     $(document).on('change', 'select', saveHostTags)
@@ -300,8 +338,6 @@ $(function() {
     $('.tagsinput').tagsinput()
 
     getHostTags($('.tagsinput'))
-
-
 })
 
 

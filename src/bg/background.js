@@ -10,6 +10,9 @@
                             </div>\
                             <i class='icon icon-pushpin'></i>\
                          </div>"
+        ,   trashHTML = "<a class='trash' title='Delete'>\
+                            <i class='icon icon-trash trash-inner' style='color:black'></i>\
+                         </a>"
         ,   isActive = {}
         ,   deleteDone = true
         ,   dbVersion = 2
@@ -79,6 +82,35 @@
             if (msg.action === "active") {
                 isActive[sender.tab.id] = true
                 respond()
+            }
+
+            if (msg.action === "delete") {
+
+                var transaction = db.transaction(["links"], "readwrite");
+                var objectStore = transaction.objectStore("links");
+                var request = objectStore.get(msg.primaryKey)
+
+                request.onsuccess = function(e) {
+                    var result = e.target.result
+                    objectStore.delete(msg.primaryKey);
+
+                    var t = db.transaction(["links"], "readonly");
+                    var o = transaction.objectStore("links");
+
+                    var count = o.count();
+
+                    count.onsuccess = function(e) {
+                        var numItems = e.target.result
+
+                        // if ~> 5Gb, assuming a generous 500K per page
+                        if (numItems === 0) {
+                            respond(numItems)
+                        } else {
+                            respond(true)
+                        }
+                    }
+
+                }
             }
 
             if (msg.action === "showAll") {
@@ -158,7 +190,6 @@
                 var     url = sender.tab.url
                     ,   text = msg.text
                     ,   tags = msg.tags
-                    ,   date = msg.date
                     ,   title = msg.title
 
                 // async control loop, start by capturing sender.tab and the listener's respond function
@@ -333,7 +364,9 @@
                             title: cursor.value.title,
                             date:  cursor.value.date,
                             img: cursor.value.img,
-                            url: cursor.value.url
+                            url: cursor.value.url,
+                            trash: trashHTML,
+                            primaryKey: cursor.primaryKey
                         }
                     }
                 )
@@ -398,8 +431,10 @@
                                 title: cursor.value.title,
                                 date: cursor.value.date,
                                 exactMatch: isExactMatch ? exactMatchHTML : undefined,
+                                trash: trashHTML,
                                 img: cursor.value.img,
-                                url: cursor.value.url
+                                url: cursor.value.url,
+                                primaryKey: cursor.primaryKey
                             }
                         }
                     )
@@ -429,7 +464,6 @@
             }
         }
     }
-
 
     function dataURItoBlob(dataURI) {
         // convert base64 to raw binary data held in a string
