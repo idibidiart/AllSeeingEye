@@ -13,9 +13,7 @@
     "scripts": ["vendor/jquery-2.1.0.min.js", "src/lib/nlp.js", "src/bg/background.js"],
     "persistent": true
   },
-  "chrome_url_overrides": {
-    "history": "src/override/history.html"
-  },
+  "options_page": "src/override/history.html",
   "permissions": [
     "<all_urls>",
     "history",
